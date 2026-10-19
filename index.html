@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f4f5f0">
+  <title>냉방비 인사이트 | 시간대별 에너지 분석</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f4f5f0;
+      --white: #fff;
+      --ink: #20251f;
+      --muted: #747c72;
+      --line: #e4e7df;
+      --green: #236d4a;
+      --green-soft: #e8f1e9;
+      --lime: #c6ed78;
+      --amber: #d79132;
+      --coral: #d96f56;
+      --mono: 'DM Mono', monospace;
+      --sans: 'IBM Plex Sans KR', sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans); font-size: 14px; }
+    button, input, select { font: inherit; }
+    button { color: inherit; }
+    .shell { max-width: 1520px; margin: 0 auto; padding: 0 34px 50px; }
+    .topbar { height: 76px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); }
+    .brand { display: flex; align-items: center; gap: 11px; font-weight: 700; letter-spacing: 0; }
+    .brand-mark { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 9px; background: var(--green); color: var(--lime); }
+    .brand-mark svg { width: 17px; height: 17px; }
+    .top-meta { display: flex; gap: 9px; align-items: center; color: var(--muted); font-size: 12px; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #72a56f; box-shadow: 0 0 0 3px #e3eee0; }
+    .intro { display: flex; justify-content: space-between; align-items: end; padding: 35px 0 27px; }
+    .eyebrow { margin: 0 0 9px; color: var(--green); font: 500 11px var(--mono); letter-spacing: 0; text-transform: uppercase; }
+    h1 { margin: 0; font-size: 27px; line-height: 1.35; letter-spacing: 0; font-weight: 600; }
+    .intro-copy { margin: 7px 0 0; color: var(--muted); font-size: 13px; }
+    .period { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; padding-bottom: 4px; }
+    .period strong { color: var(--ink); font-weight: 500; }
+    .dashboard { display: grid; grid-template-columns: 312px minmax(0, 1fr); align-items: start; gap: 20px; }
+    .panel { background: var(--white); border: 1px solid var(--line); border-radius: 8px; }
+    .settings { padding: 20px 20px 18px; }
+    .section-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 17px; }
+    .section-heading h2 { font-size: 14px; font-weight: 600; margin: 0; }
+    .section-icon { width: 25px; height: 25px; border-radius: 6px; background: var(--green-soft); color: var(--green); display: grid; place-items: center; }
+    .section-icon svg { width: 14px; height: 14px; }
+    .field { margin-top: 14px; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    label { display: block; margin-bottom: 6px; color: #596158; font-size: 11px; font-weight: 500; }
+    .input-wrap { position: relative; }
+    input, select { width: 100%; height: 38px; border: 1px solid #dfe3da; border-radius: 5px; background: #fff; color: var(--ink); outline: none; padding: 0 11px; transition: border-color .15s, box-shadow .15s; }
+    input:focus, select:focus { border-color: #6e9a7a; box-shadow: 0 0 0 3px #eaf2eb; }
+    input[type=number] { font: 500 13px var(--mono); }
+    .suffix { position: absolute; right: 11px; top: 50%; transform: translateY(-50%); color: #929990; font-size: 10px; pointer-events: none; }
+    .has-suffix { padding-right: 39px; }
+    .divider { height: 1px; background: var(--line); margin: 19px 0 17px; }
+    .subheading { margin: 0 0 9px; font-size: 11px; font-weight: 600; }
+    .schedule-head { display: flex; align-items: center; justify-content: space-between; }
+    .schedule-hint { font-size: 10px; color: #929990; }
+    .hours { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; }
+    .hour { height: 30px; border: 1px solid #e5e8e1; border-radius: 4px; background: #fafbf9; color: #8a9189; cursor: pointer; font: 10px var(--mono); transition: background .14s, border-color .14s, color .14s; }
+    .hour:hover { border-color: #9ab49e; }
+    .hour.active { background: var(--green-soft); border-color: #c6d9c8; color: var(--green); font-weight: 500; }
+    .hour.peak { box-shadow: inset 0 -2px 0 #e7b870; }
+    .rate-grid { display: grid; gap: 7px; }
+    .rate-line { display: grid; grid-template-columns: 7px 1fr 85px; align-items: center; gap: 7px; font-size: 10px; color: #656d64; }
+    .rate-dot { width: 7px; height: 7px; border-radius: 2px; background: #aeb7aa; }
+    .rate-dot.peak { background: var(--amber); }
+    .rate-dot.offpeak { background: #8aa9be; }
+    .rate-line input { height: 31px; padding: 0 7px; font-size: 11px; text-align: right; }
+    .rate-line .suffix { right: 6px; font-size: 9px; }
+    .rate-line .has-suffix { padding-right: 25px; }
+    .settings-foot { display: flex; gap: 7px; align-items: start; margin: 14px 0 0; color: #8a9189; font-size: 10px; line-height: 1.55; }
+    .settings-foot svg { width: 13px; height: 13px; flex: 0 0 auto; margin-top: 1px; }
+    .results { min-width: 0; display: grid; gap: 14px; }
+    .metrics { display: grid; grid-template-columns: 1.15fr 1fr 1fr; gap: 12px; }
+    .metric { min-height: 116px; padding: 16px 18px; position: relative; overflow: hidden; }
+    .metric.primary { background: var(--green); color: white; border-color: var(--green); }
+    .metric.primary::after { content: ''; position: absolute; width: 115px; height: 115px; right: -32px; bottom: -58px; border: 1px solid #ffffff2b; border-radius: 50%; box-shadow: 0 0 0 14px #ffffff0d, 0 0 0 30px #ffffff09; }
+    .metric-label { margin: 0 0 15px; font-size: 11px; color: #81897f; }
+    .primary .metric-label { color: #d5e6d8; }
+    .metric-value { font: 500 25px var(--mono); line-height: 1; letter-spacing: 0; }
+    .metric-unit { font: 11px var(--sans); margin-left: 4px; color: #879085; }
+    .primary .metric-unit { color: #d5e6d8; }
+    .metric-note { margin-top: 11px; color: #879085; font-size: 10px; }
+    .primary .metric-note { color: #d5e6d8; }
+    .saving { color: var(--green); }
+    .card-pad { padding: 19px 20px 15px; }
+    .chart-head { display: flex; justify-content: space-between; align-items: start; margin-bottom: 13px; }
+    .chart-head h2, .recommend-head h2, .table-head h2 { margin: 0; font-size: 14px; font-weight: 600; }
+    .chart-subtitle { margin: 4px 0 0; font-size: 11px; color: var(--muted); }
+    .legend { display: flex; gap: 13px; align-items: center; padding-top: 3px; font-size: 10px; color: #747c72; }
+    .legend span { display: flex; align-items: center; gap: 5px; }
+    .legend i { width: 8px; height: 8px; border-radius: 2px; background: #bdc5b9; }
+    .legend .optimized { background: var(--green); }
+    .chart-wrap { height: 206px; position: relative; }
+    #usage-chart { width: 100%; height: 100%; display: block; }
+    .chart-tooltip { display: none; position: absolute; z-index: 2; min-width: 140px; background: #20251f; color: white; border-radius: 5px; padding: 8px 10px; font-size: 10px; line-height: 1.7; pointer-events: none; box-shadow: 0 4px 14px #0002; }
+    .chart-tooltip strong { font: 11px var(--mono); }
+    .chart-bottom { display: flex; justify-content: space-between; color: #8a9189; font: 9px var(--mono); padding: 1px 3px 0 31px; }
+    .chart-caption { display: flex; justify-content: space-between; margin-top: 11px; padding-top: 11px; border-top: 1px solid #edf0ea; color: #81897f; font-size: 10px; }
+    .chart-caption strong { color: var(--ink); font-weight: 500; }
+    .lower-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 14px; }
+    .recommendations { padding: 18px 19px; }
+    .recommend-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .recommend-tag { padding: 4px 7px; border-radius: 4px; background: #edf4e4; color: #5d7837; font: 10px var(--mono); }
+    .tip { display: grid; grid-template-columns: 27px 1fr; gap: 10px; padding: 10px 0; border-top: 1px solid #edf0ea; }
+    .tip-icon { width: 25px; height: 25px; border-radius: 6px; display: grid; place-items: center; color: var(--green); background: var(--green-soft); }
+    .tip-icon.amber { color: #a96d20; background: #fbf0df; }
+    .tip-icon.blue { color: #537d91; background: #eaf2f5; }
+    .tip-icon svg { width: 14px; height: 14px; }
+    .tip h3 { margin: 0 0 3px; font-size: 11px; font-weight: 600; }
+    .tip p { margin: 0; color: #81897f; font-size: 10px; line-height: 1.55; }
+    .hourly { overflow: hidden; }
+    .table-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 18px 12px; }
+    .table-head span { color: #929990; font-size: 10px; }
+    .table-scroll { max-height: 249px; overflow: auto; scrollbar-width: thin; scrollbar-color: #cbd2c7 transparent; }
+    table { border-collapse: collapse; width: 100%; white-space: nowrap; font-size: 10px; }
+    thead { position: sticky; top: 0; z-index: 1; background: #f7f8f5; color: #858d83; }
+    th { padding: 8px 8px; text-align: right; font-size: 9px; font-weight: 500; }
+    th:first-child, td:first-child { text-align: left; padding-left: 16px; }
+    td { padding: 8px; text-align: right; border-top: 1px solid #f0f2ed; color: #697168; }
+    td:first-child { color: var(--ink); font: 10px var(--mono); }
+    .period-tag { display: inline-flex; align-items: center; gap: 4px; }
+    .period-tag::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: #aeb7aa; }
+    .period-tag.피크::before { background: var(--amber); }
+    .period-tag.경부하::before { background: #8aa9be; }
+    .inactive-row td { color: #b2b8af; }
+    .app-note { padding: 3px 2px 0; color: #929990; font-size: 10px; line-height: 1.6; }
+    .app-note strong { color: #70786e; font-weight: 500; }
+    @media (max-width: 1000px) {
+      .shell { padding: 0 20px 36px; }
+      .dashboard { grid-template-columns: 280px minmax(0, 1fr); gap: 14px; }
+      .lower-grid { grid-template-columns: 1fr; }
+      .metrics { gap: 8px; }
+      .metric { padding: 14px; }
+      .metric-value { font-size: 21px; }
+    }
+    @media (max-width: 720px) {
+      .shell { padding: 0 14px 28px; }
+      .topbar { height: 62px; }
+      .top-meta { font-size: 0; gap: 0; }
+      .intro { display: block; padding: 25px 0 20px; }
+      h1 { font-size: 23px; }
+      .period { margin-top: 12px; }
+      .dashboard { grid-template-columns: 1fr; }
+      .settings { padding: 18px; }
+      .metrics { grid-template-columns: 1fr 1fr; }
+      .metric.primary { grid-column: 1 / -1; min-height: 105px; }
+      .metric { min-height: 104px; }
+      .chart-head { gap: 12px; }
+      .legend { gap: 8px; font-size: 9px; }
+      .card-pad { padding: 16px 14px 13px; }
+      .chart-wrap { height: 185px; }
+      .chart-caption { gap: 8px; line-height: 1.5; }
+      .chart-caption span:last-child { text-align: right; }
+      .lower-grid { gap: 12px; }
+    }
+    @media (max-width: 380px) {
+      .metric-value { font-size: 19px; }
+      .chart-head { display: block; }
+      .legend { margin-top: 9px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v18M5.64 6.64l12.72 10.72M18.36 6.64 5.64 17.36M4 12h16"/><circle cx="12" cy="12" r="2.2"/></svg></span>
+        <span>냉방비 인사이트</span>
+      </div>
+      <div class="top-meta"><span class="status-dot"></span> 로컬 분석 도구 <span aria-hidden="true">·</span> 입력값은 브라우저에서만 처리됩니다</div>
+    </header>
+
+    <section class="intro">
+      <div>
+        <p class="eyebrow">BUILDING ENERGY / 01</p>
+        <h1>시간대별 냉방비 분석</h1>
+        <p class="intro-copy">건물 조건과 운영 시간을 바탕으로 냉방 전력비를 추정합니다.</p>
+      </div>
+      <div class="period"><span class="status-dot"></span> 분석 기준 <strong>1일 운전 패턴 · 월 환산</strong></div>
+    </section>
+
+    <main class="dashboard">
+      <aside class="panel settings" aria-label="건물 및 요금 설정">
+        <div class="section-heading">
+          <h2>건물 조건</h2>
+          <span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 21V5l8-3v19M12 9h8v12M2 21h20M7 7h2m-2 4h2m-2 4h2m8-3h2m-2 4h2"/></svg></span>
+        </div>
+        <div class="field">
+          <label for="building-type">건물 용도</label>
+          <select id="building-type">
+            <option value="office">사무실</option>
+            <option value="retail">상업·매장</option>
+            <option value="school">교육시설</option>
+            <option value="hotel">숙박시설</option>
+            <option value="factory">작업장</option>
+          </select>
+        </div>
+        <div class="field-row field">
+          <div><label for="area">냉방 면적</label><div class="input-wrap"><input id="area" type="number" min="10" max="100000" step="10" value="600" class="has-suffix"><span class="suffix">m²</span></div></div>
+          <div><label for="capacity">냉방 용량</label><div class="input-wrap"><input id="capacity" type="number" min="1" max="10000" step="1" value="180" class="has-suffix"><span class="suffix">kW</span></div></div>
+        </div>
+        <div class="field-row field">
+          <div><label for="cop">냉방 효율 (COP)</label><div class="input-wrap"><input id="cop" type="number" min="1" max="10" step="0.1" value="3.2"></div></div>
+          <div><label for="setpoint">설정 온도</label><div class="input-wrap"><input id="setpoint" type="number" min="18" max="30" step="0.5" value="25" class="has-suffix"><span class="suffix">°C</span></div></div>
+        </div>
+        <div class="field">
+          <label for="days">월 운전 일수</label><div class="input-wrap"><input id="days" type="number" min="1" max="31" step="1" value="22" class="has-suffix"><span class="suffix">일</span></div>
+        </div>
+
+        <div class="divider"></div>
+        <div class="schedule-head"><p class="subheading">시간대별 냉방 운전</p><span class="schedule-hint">눌러서 켜기 / 끄기</span></div>
+        <div class="hours" id="hours" aria-label="시간별 냉방 운전 설정"></div>
+
+        <div class="divider"></div>
+        <p class="subheading">시간대별 전력 단가</p>
+        <div class="rate-grid">
+          <div class="rate-line"><i class="rate-dot offpeak"></i><span>경부하 · 23–08시</span><div class="input-wrap"><input id="rate-offpeak" type="number" min="0" max="10000" step="1" value="115" class="has-suffix" aria-label="경부하 단가"><span class="suffix">원</span></div></div>
+          <div class="rate-line"><i class="rate-dot"></i><span>중간부하 · 09–13시, 18시</span><div class="input-wrap"><input id="rate-normal" type="number" min="0" max="10000" step="1" value="160" class="has-suffix" aria-label="중간부하 단가"><span class="suffix">원</span></div></div>
+          <div class="rate-line"><i class="rate-dot peak"></i><span>최대부하 · 14–17시, 19–22시</span><div class="input-wrap"><input id="rate-peak" type="number" min="0" max="10000" step="1" value="235" class="has-suffix" aria-label="최대부하 단가"><span class="suffix">원</span></div></div>
+        </div>
+        <p class="settings-foot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/></svg><span>단가는 예시값입니다. 전기요금 고지서의 시간대별 단가로 조정하세요.</span></p>
+      </aside>
+
+      <section class="results" aria-label="분석 결과">
+        <div class="metrics">
+          <article class="panel metric primary"><p class="metric-label">예상 월 냉방 전력비</p><div class="metric-value" id="monthly-cost">-</div><p class="metric-note" id="monthly-note">현재 운전 기준 · 월 환산</p></article>
+          <article class="panel metric"><p class="metric-label">절감 시나리오</p><div class="metric-value saving" id="monthly-saving">-</div><p class="metric-note" id="saving-rate">월 예상 절감액</p></article>
+          <article class="panel metric"><p class="metric-label">하루 냉방 사용량</p><div class="metric-value" id="daily-energy">-</div><p class="metric-note" id="daily-cost">현재 운전 기준</p></article>
+        </div>
+
+        <article class="panel card-pad">
+          <div class="chart-head">
+            <div><h2>시간대별 전력 사용량</h2><p class="chart-subtitle">운전 설정과 시간대별 냉방 부하를 반영한 추정치</p></div>
+            <div class="legend"><span><i></i>현재 운전</span><span><i class="optimized"></i>절감 시나리오</span></div>
+          </div>
+          <div class="chart-wrap" id="chart-wrap"><canvas id="usage-chart" aria-label="시간별 현재 및 절감 시나리오 전력 사용량 비교 차트"></canvas><div class="chart-tooltip" id="chart-tooltip"></div></div>
+          <div class="chart-bottom"><span>kWh / 시간</span><span>00시</span><span>06시</span><span>12시</span><span>18시</span><span>23시</span></div>
+          <div class="chart-caption"><span>전력비가 가장 큰 시간 <strong id="highest-hour">-</strong></span><span>최대부하 시간대 비용 비중 <strong id="peak-share">-</strong></span></div>
+        </article>
+
+        <div class="lower-grid">
+          <article class="panel recommendations">
+            <div class="recommend-head"><h2>절감 제안</h2><span class="recommend-tag">SIMULATION</span></div>
+            <div class="tip"><span class="tip-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3v2m0 14v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M3 12h2m14 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/><circle cx="12" cy="12" r="4"/></svg></span><div><h3>설정 온도 1°C 높이기</h3><p id="tip-setpoint">냉방 운전 중 설정 온도를 1°C 높이는 시나리오를 비교합니다.</p></div></div>
+            <div class="tip"><span class="tip-icon amber" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 19V5m0 14h17M8 15l3-4 3 2 6-7"/><path d="M16 6h4v4"/></svg></span><div><h3>최대부하 시간 냉방 강도 완화</h3><p id="tip-peak">피크 시간대 냉방 부하를 낮춰 비싼 시간의 전력 사용을 줄입니다.</p></div></div>
+            <div class="tip"><span class="tip-icon blue" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><div><h3>운전 시간 다시 확인</h3><p id="tip-hours">실제 재실 시간에 맞춰 시간대 운전을 설정하면 대기 냉방을 줄일 수 있습니다.</p></div></div>
+          </article>
+
+          <article class="panel hourly">
+            <div class="table-head"><h2>시간별 비용 내역</h2><span>운전 시간만 표시</span></div>
+            <div class="table-scroll"><table><thead><tr><th>시간</th><th>부하</th><th>사용량</th><th>단가</th><th>예상 비용</th></tr></thead><tbody id="hourly-rows"></tbody></table></div>
+          </article>
+        </div>
+        <p class="app-note"><strong>분석 안내</strong> 예상치는 입력한 면적·냉방 용량·COP·운전 시간과 단순 부하 모델을 이용한 참고용입니다. 기본요금, 계약종별·계절별 요금, 역률, 다른 설비의 사용량은 포함하지 않으며 실제 청구액과 다를 수 있습니다. 절감 시나리오는 설정 온도 +1°C(냉방 전력 약 6% 감소 가정), 최대부하 시간 부하 15% 완화를 적용합니다.</p>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const hours = Array.from({ length: 24 }, (_, hour) => hour);
+    const heatProfile = [0.40, 0.37, 0.35, 0.34, 0.34, 0.38, 0.46, 0.57, 0.68, 0.77, 0.85, 0.92, 0.97, 1.00, 1.00, 0.98, 0.94, 0.89, 0.82, 0.75, 0.67, 0.59, 0.51, 0.45];
+    const buildingLoads = { office: 105, retail: 140, school: 95, hotel: 125, factory: 155 };
+    const activeHours = new Set(hours.filter(hour => hour >= 9 && hour < 18));
+    const $ = id => document.getElementById(id);
+    const number = id => Math.max(0, Number($(id).value) || 0);
+    const won = value => `${Math.round(value).toLocaleString('ko-KR')}원`;
+    const quantity = value => value.toLocaleString('ko-KR', { maximumFractionDigits: 1 });
+
+    function rateFor(hour) {
+      if (hour <= 8 || hour === 23) return { label: '경부하', rate: number('rate-offpeak'), type: '경부하' };
+      if ((hour >= 14 && hour <= 17) || (hour >= 19 && hour <= 22)) return { label: '최대부하', rate: number('rate-peak'), type: '피크' };
+      return { label: '중간부하', rate: number('rate-normal'), type: '중간' };
+    }
+
+    function renderHourButtons() {
+      const container = $('hours');
+      container.innerHTML = '';
+      hours.forEach(hour => {
+        const button = document.createElement('button');
+        const peak = (hour >= 14 && hour <= 17) || (hour >= 19 && hour <= 22);
+        button.type = 'button';
+        button.className = `hour${activeHours.has(hour) ? ' active' : ''}${peak ? ' peak' : ''}`;
+        button.textContent = String(hour).padStart(2, '0');
+        button.setAttribute('aria-pressed', String(activeHours.has(hour)));
+        button.setAttribute('aria-label', `${hour}시 냉방 ${activeHours.has(hour) ? '운전 중' : '꺼짐'}`);
+        button.addEventListener('click', () => {
+          if (activeHours.has(hour)) activeHours.delete(hour);
+          else activeHours.add(hour);
+          button.classList.toggle('active', activeHours.has(hour));
+          button.setAttribute('aria-pressed', String(activeHours.has(hour)));
+          button.setAttribute('aria-label', `${hour}시 냉방 ${activeHours.has(hour) ? '운전 중' : '꺼짐'}`);
+          calculate();
+        });
+        container.append(button);
+      });
+    }
+
+    function getData() {
+      const area = Math.max(1, number('area'));
+      const capacity = Math.max(0.1, number('capacity'));
+      const cop = Math.max(0.1, number('cop'));
+      const setpoint = Math.min(30, Math.max(18, number('setpoint')));
+      const coolingFactor = Math.max(0.65, 1 + (26 - setpoint) * 0.055);
+      const peakHours = [];
+      const data = hours.map(hour => {
+        const tariff = rateFor(hour);
+        const isPeak = tariff.type === '피크';
+        const thermalLoad = area * buildingLoads[$('building-type').value] / 1000 * heatProfile[hour] * coolingFactor;
+        const baseline = activeHours.has(hour) ? Math.min(thermalLoad / cop, capacity / cop) : 0;
+        const optimized = baseline * 0.94 * (isPeak ? 0.85 : 1);
+        if (isPeak && baseline > 0) peakHours.push(hour);
+        return { hour, baseline, optimized, cost: baseline * tariff.rate, rate: tariff.rate, tariff: tariff.label, type: tariff.type };
+      });
+      return { data, peakHours, days: Math.max(1, number('days')) };
+    }
+
+    function formatHour(hour) { return `${String(hour).padStart(2, '0')}:00` }
+
+    function renderTable(data) {
+      $('hourly-rows').innerHTML = data.filter(row => row.baseline > 0).map(row => `
+        <tr>
+          <td>${formatHour(row.hour)}</td>
+          <td><span class="period-tag ${row.type}">${row.tariff}</span></td>
+          <td>${quantity(row.baseline)} kWh</td>
+          <td>${quantity(row.rate)}원</td>
+          <td>${won(row.cost)}</td>
+        </tr>`).join('') || '<tr><td colspan="5" style="padding:22px;text-align:center;color:#929990">운전 시간을 선택하면 비용이 표시됩니다.</td></tr>';
+    }
+
+    function drawChart(data) {
+      const canvas = $('usage-chart');
+      const rect = canvas.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = Math.round(rect.width * ratio);
+      canvas.height = Math.round(rect.height * ratio);
+      const ctx = canvas.getContext('2d');
+      ctx.scale(ratio, ratio);
+      const width = rect.width;
+      const height = rect.height;
+      const left = 31;
+      const right = 8;
+      const top = 8;
+      const bottom = 8;
+      const plotHeight = height - top - bottom;
+      const plotWidth = width - left - right;
+      const maxValue = Math.max(1, ...data.map(row => row.baseline)) * 1.18;
+      const group = plotWidth / 24;
+      const barWidth = Math.max(2, Math.min(8, group * 0.29));
+      ctx.clearRect(0, 0, width, height);
+      ctx.font = '9px "DM Mono", monospace';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      for (let line = 0; line <= 3; line++) {
+        const y = top + plotHeight - (plotHeight * line / 3);
+        ctx.strokeStyle = '#edf0ea';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(left, Math.round(y) + 0.5); ctx.lineTo(width - right, Math.round(y) + 0.5); ctx.stroke();
+        ctx.fillStyle = '#929990';
+        ctx.fillText(quantity(maxValue * line / 3), left - 7, y);
+      }
+      data.forEach(row => {
+        const x = left + row.hour * group + group / 2;
+        const baselineHeight = row.baseline / maxValue * plotHeight;
+        const optimizedHeight = row.optimized / maxValue * plotHeight;
+        if (row.type === '피크') {
+          ctx.fillStyle = '#fbf5e9';
+          ctx.fillRect(left + row.hour * group, top, group, plotHeight);
+        }
+        ctx.fillStyle = '#bdc5b9';
+        if (baselineHeight > 0) ctx.fillRect(x - barWidth - 1, top + plotHeight - baselineHeight, barWidth, baselineHeight);
+        ctx.fillStyle = '#236d4a';
+        if (optimizedHeight > 0) ctx.fillRect(x + 1, top + plotHeight - optimizedHeight, barWidth, optimizedHeight);
+      });
+    }
+
+    function updateRecommendations(data, peakHours, setpointSavingPerDay) {
+      const peakCost = data.filter(row => row.type === '피크').reduce((sum, row) => sum + row.cost, 0);
+      const totalCost = data.reduce((sum, row) => sum + row.cost, 0);
+      const share = totalCost ? Math.round(peakCost / totalCost * 100) : 0;
+      const peakStart = peakHours.length ? formatHour(peakHours[0]).slice(0, 2) : null;
+      const peakEnd = peakHours.length ? formatHour(peakHours[peakHours.length - 1] + 1).slice(0, 2) : null;
+      $('tip-setpoint').textContent = `설정 ${quantity(number('setpoint'))}°C → ${quantity(Math.min(30, number('setpoint') + 1))}°C 적용 시 하루 약 ${won(setpointSavingPerDay)} 절감 가능성이 있습니다. (단순 가정)`;
+      $('tip-peak').textContent = peakHours.length
+        ? `${peakStart}–${peakEnd}시 중 운전 구간은 ${peakHours.map(hour => `${hour}시`).join(', ')}입니다. 이 시간대 부하를 15% 낮추는 시나리오를 반영했습니다.`
+        : '현재 설정된 운전 시간에 최대부하 구간이 없습니다. 피크 시간 운전을 피하고 있어요.';
+      const active = data.filter(row => row.baseline > 0).length;
+      $('tip-hours').textContent = active
+        ? `${active}시간 운전 중입니다. 비재실·준비 시간에 냉방이 켜져 있지 않은지 확인해 보세요.`
+        : '운전 시간이 설정되지 않았습니다. 실제 냉방 시간대를 선택해 주세요.';
+      $('peak-share').textContent = `${share}%`;
+    }
+
+    function calculate() {
+      const { data, peakHours, days } = getData();
+      const totalEnergy = data.reduce((sum, row) => sum + row.baseline, 0);
+      const totalCost = data.reduce((sum, row) => sum + row.cost, 0);
+      const optimizedCost = data.reduce((sum, row) => sum + row.optimized * row.rate, 0);
+      const savedDaily = Math.max(0, totalCost - optimizedCost);
+      const highest = data.reduce((best, row) => row.cost > best.cost ? row : best, { cost: 0, hour: null });
+      $('monthly-cost').textContent = won(totalCost * days);
+      $('monthly-note').textContent = `현재 운전 기준 · 월 ${days}일 환산`;
+      $('monthly-saving').textContent = won(savedDaily * days);
+      $('saving-rate').textContent = `월 예상 절감액 · ${totalCost ? Math.round(savedDaily / totalCost * 100) : 0}% 절감 가정`;
+      $('daily-energy').textContent = quantity(totalEnergy);
+      $('daily-cost').textContent = `kWh · 하루 ${won(totalCost)}`;
+      $('highest-hour').textContent = highest.hour === null ? '운전 시간 없음' : `${formatHour(highest.hour)} · ${won(highest.cost)}`;
+      renderTable(data);
+      updateRecommendations(data, peakHours, totalCost * 0.06);
+      drawChart(data);
+    }
+
+    document.querySelectorAll('input, select').forEach(input => input.addEventListener('input', calculate));
+    renderHourButtons();
+    calculate();
+    window.addEventListener('resize', () => drawChart(getData().data));
+    $('chart-wrap').addEventListener('pointermove', event => {
+      const rect = $('usage-chart').getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const hour = Math.max(0, Math.min(23, Math.floor((x - 31) / (rect.width - 39) * 24)));
+      const row = getData().data[hour];
+      if (!row || row.baseline <= 0) { $('chart-tooltip').style.display = 'none'; return; }
+      const tooltip = $('chart-tooltip');
+      tooltip.innerHTML = `<strong>${formatHour(hour)}</strong><br>현재 ${quantity(row.baseline)} kWh · ${won(row.cost)}<br>절감 ${quantity(row.optimized)} kWh`;
+      tooltip.style.display = 'block';
+      tooltip.style.left = `${Math.min(rect.width - 150, Math.max(0, x + 10))}px`;
+      tooltip.style.top = `${Math.max(0, event.clientY - rect.top - 58)}px`;
+    });
+    $('chart-wrap').addEventListener('pointerleave', () => { $('chart-tooltip').style.display = 'none'; });
+  </script>
+</body>
+</html>
